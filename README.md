@@ -1,4 +1,4 @@
-# Bot Telegram Pokémon VGC
+# Bot Telegram Pokémon VGC Tournament
 
 Bot Python che controlla il calendario pubblico usato da [Pokémon Event Locator but better](https://shairaba.github.io/pokemon-events-italia/index.html), una vista italiana che raccoglie dati dal [localizzatore ufficiale Pokémon](https://events.pokemon.com/EventLocator/). Il bot usa il JSON pubblicato dal sito per ottenere in un'unica richiesta eventi di tutte le regioni; i messaggi includono anche il collegamento al locator ufficiale per consultazione. Il locator ufficiale espone una ricerca geografica per città e raggio, non un elenco nazionale per regione, quindi il bot non effettua scraping dell'interfaccia ufficiale.
 
