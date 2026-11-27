@@ -9,7 +9,7 @@ Bot Python che controlla il calendario pubblico usato da [Pokémon Event Locator
 - Per impostazione predefinita considera solo gli eventi Video Game con tag Sfida di Lega o Coppa di Lega.
 - Un controllo periodico invia un messaggio quando appare un nuovo evento corrispondente. I tornei già pubblicati al momento dell'iscrizione vengono registrati come baseline e non generano messaggi arretrati.
 - `/recap` invia in un unico messaggio le Sfide e Coppe di Lega VGC del mese corrente nella regione selezionata.
-- `/cerca` apre una ricerca una tantum con scelta di gioco e tipo evento; non cambia i filtri degli avvisi automatici.
+- `/cerca` apre una ricerca una tantum con scelta di regione, gioco e tipo evento; la regione scelta vale solo per quella ricerca e non cambia avvisi o recap.
 - Il recap automatico mensile è opzionale e disattivato per impostazione predefinita.
 
 Ogni chat ha una sola regione. In un gruppo, avviare `/start` nel gruppo per configurare gli avvisi lì. Il bot deve essere in esecuzione perché polling e notifiche siano attivi.

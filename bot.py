@@ -178,12 +178,28 @@ def render_event_list(title: str, events: list[Event], empty_text: str = "Nessun
 async def search(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message is None:
         return
-    context.user_data["search_filters"] = {"games": {"vg"}, "types": {"league_challenge", "league_cup"}}
+    store: Store = context.application.bot_data["store"]
+    region = store.get_region(update.effective_chat.id) if update.effective_chat else None
+    if not region:
+        await update.message.reply_text("Prima scegli la regione con /start.")
+        return
+    context.user_data["search_filters"] = {
+        "region": region,
+        "selecting_region": False,
+        "games": {"vg"},
+        "types": {"league_challenge", "league_cup"},
+    }
     await show_search_filters(update, context)
 
 
-def search_keyboard(filters: dict[str, set[str]]) -> InlineKeyboardMarkup:
+def search_keyboard(filters: dict) -> InlineKeyboardMarkup:
     rows = []
+    rows.append([
+        InlineKeyboardButton(
+            f"🌍 Regione: {filters['region']} (solo questa ricerca)",
+            callback_data="search:region",
+        )
+    ])
     for key, label in GAMES.items():
         mark = "☑" if key in filters["games"] else "☐"
         rows.append([InlineKeyboardButton(f"{mark} {label}", callback_data=f"search:game:{key}")])
@@ -194,9 +210,24 @@ def search_keyboard(filters: dict[str, set[str]]) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(rows)
 
 
+def search_region_keyboard() -> InlineKeyboardMarkup:
+    buttons = [
+        InlineKeyboardButton(name, callback_data=f"search:region:{name}")
+        for name in REGIONS
+    ]
+    rows = [buttons[i:i + 2] for i in range(0, len(buttons), 2)]
+    rows.append([InlineKeyboardButton("↩ Torna ai filtri", callback_data="search:region:back")])
+    return InlineKeyboardMarkup(rows)
+
+
 async def show_search_filters(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    text = "Scegli i filtri per questa ricerca (non modifica gli avvisi automatici):"
-    markup = search_keyboard(context.user_data["search_filters"])
+    filters = context.user_data["search_filters"]
+    if filters["selecting_region"]:
+        text = "Scegli la regione per questa ricerca. La regione configurata resterà invariata:"
+        markup = search_region_keyboard()
+    else:
+        text = "Scegli regione e filtri per questa ricerca (non modifica avvisi o recap):"
+        markup = search_keyboard(filters)
     if update.callback_query:
         await update.callback_query.edit_message_text(text, reply_markup=markup)
     elif update.message:
@@ -212,6 +243,21 @@ async def handle_search_callback(update: Update, context: ContextTypes.DEFAULT_T
         await query.edit_message_text("Ricerca scaduta. Usa /cerca per avviarne una nuova.")
         return
     parts = query.data.split(":")
+    if query.data == "search:region":
+        filters["selecting_region"] = True
+        await query.answer()
+        await show_search_filters(update, context)
+        return
+    if query.data.startswith("search:region:"):
+        selected = query.data.split(":", 2)[2]
+        if selected == "back":
+            filters["selecting_region"] = False
+        elif selected in REGIONS:
+            filters["region"] = selected
+            filters["selecting_region"] = False
+        await query.answer()
+        await show_search_filters(update, context)
+        return
     if len(parts) == 3 and parts[1] in ("game", "type"):
         group, value = parts[1], parts[2]
         if value in filters["games" if group == "game" else "types"]:
@@ -224,11 +270,7 @@ async def handle_search_callback(update: Update, context: ContextTypes.DEFAULT_T
     if query.data != "search:run":
         return
     await query.answer("Sto cercando…")
-    store: Store = context.application.bot_data["store"]
-    region = store.get_region(query.message.chat_id)
-    if not region:
-        await query.edit_message_text("Prima scegli la regione con /start.")
-        return
+    region = filters["region"]
     try:
         events = await asyncio.to_thread(fetch_events)
     except EventSourceError:
