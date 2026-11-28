@@ -280,7 +280,7 @@ async def handle_search_callback(update: Update, context: ContextTypes.DEFAULT_T
     matches = search_events(events, region, filters["games"], filters["types"], today)
     context.user_data.pop("search_filters", None)
     body = render_event_list(
-        f"🔎 Risultati di {ITALIAN_MONTHS[today.month - 1]} {today.year} · {region}",
+        f"🔎 Risultati di {ITALIAN_MONTHS[today.month - 1].capitalize()} {today.year} · {region}",
         matches,
         "Nessun evento trovato con i filtri selezionati.",
     )
